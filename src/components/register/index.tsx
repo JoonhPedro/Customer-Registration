@@ -19,6 +19,7 @@ import {
   Td,
   Th,
   Thead,
+  Tooltip,
   Tr,
 } from '@chakra-ui/react'
 import React, { useEffect, useRef, useState } from 'react'
@@ -32,6 +33,9 @@ import {
   RegisterContainer,
   Title,
 } from './styles'
+import { formatCpf } from '../../format/documents'
+import { formatPhoneNumber } from '../../format/phonerNumber'
+import { formatName } from '../../format/name'
 
 interface CustomerProps {
   id: string
@@ -125,7 +129,7 @@ export function Register() {
       nameRef.current.value = customerToEdit.name
       emailRef.current.value = customerToEdit.email
       phoneRef.current.value = customerToEdit.phone
-      documentRef.current.value = customerToEdit.document
+      documentRef.current.value = customerToEdit.documents
       setIsOpen(true)
     }
   }
@@ -251,10 +255,14 @@ export function Register() {
               <Tbody>
                 {customers.map((customer) => (
                   <Tr key={customer.id}>
-                    <Td>{customer.name}</Td>
+                    <Td>
+                      <Tooltip label={customer.name} placement="top-end">
+                        {formatName(customer.name)}
+                      </Tooltip>
+                    </Td>
                     <Td>{customer.email}</Td>
-                    <Td>{customer.phone}</Td>
-                    <Td>{customer.document}</Td>
+                    <Td>{formatPhoneNumber(customer.phone)}</Td>
+                    <Td>{formatCpf(customer.document)}</Td>
                     <Td>
                       <Badge colorScheme={customer.status ? 'green' : 'red'}>
                         {customer.status ? 'Ativo' : 'Inativo'}
