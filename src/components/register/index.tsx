@@ -11,6 +11,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Select,
   Stack,
   Table,
   TableCaption,
@@ -21,8 +22,12 @@ import {
   Thead,
   Tooltip,
   Tr,
+  useToast,
 } from '@chakra-ui/react'
 import React, { useEffect, useRef, useState } from 'react'
+import { formatCpf } from '../../format/documents'
+import { formatName } from '../../format/name'
+import { formatPhoneNumber } from '../../format/phonerNumber'
 import { api } from '../../services/api'
 import {
   Container,
@@ -33,9 +38,6 @@ import {
   RegisterContainer,
   Title,
 } from './styles'
-import { formatCpf } from '../../format/documents'
-import { formatPhoneNumber } from '../../format/phonerNumber'
-import { formatName } from '../../format/name'
 
 interface CustomerProps {
   id: string
@@ -58,6 +60,8 @@ export function Register() {
   const emailRef = useRef<HTMLInputElement | null>(null)
   const phoneRef = useRef<HTMLInputElement | null>(null)
   const documentRef = useRef<HTMLInputElement | null>(null)
+  const statusRef = useRef<HTMLSelectElement | null>(null)
+  const toast = useToast()
 
   useEffect(() => {
     loadCustomers()
@@ -78,47 +82,70 @@ export function Register() {
     )
       return
 
-    const response = await api.post('/customer', {
-      name: nameRef.current?.value,
-      email: emailRef.current?.value,
-      phone: phoneRef.current?.value,
-      document: documentRef.current?.value,
-    })
+    try {
+      const response = await api.post('/customer', {
+        name: nameRef.current?.value,
+        email: emailRef.current?.value,
+        phone: phoneRef.current?.value,
+        document: documentRef.current?.value,
+      })
 
-    setCustomers([...customers, response.data])
-    handleCloseModal()
-    handleClear()
+      setCustomers([...customers, response.data])
+      handleClear()
+
+      toast({
+        title: 'Cliente cadastrado.',
+        description: 'O cliente foi cadastrado com sucesso.',
+        status: 'success',
+        duration: 1500,
+        isClosable: true,
+        position: 'top-right',
+      })
+    } catch (error) {
+      console.error('Erro ao cadastrar cliente:', error)
+
+      toast({
+        title: 'Erro ao cadastrar cliente.',
+        description: 'Ocorreu um erro ao tentar cadastrar o cliente.',
+        status: 'error',
+        duration: 1500,
+        isClosable: true,
+        position: 'top-right',
+      })
+    }
   }
 
   function handleClear() {
-    if (nameRef.current) {
-      nameRef.current.value = ''
-    }
-
-    if (emailRef.current) {
-      emailRef.current.value = ''
-    }
-
-    if (phoneRef.current) {
-      phoneRef.current.value = ''
-    }
-
-    if (documentRef.current) {
-      documentRef.current.value = ''
-    }
+    if (nameRef.current) nameRef.current.value = ''
+    if (emailRef.current) emailRef.current.value = ''
+    if (phoneRef.current) phoneRef.current.value = ''
+    if (documentRef.current) documentRef.current.value = ''
   }
 
   async function handleDelete(id: string) {
     try {
-      await api.delete('/customer', {
-        params: {
-          id,
-        },
-      })
+      await api.delete('/customer', { params: { id } })
       const allCustomers = customers.filter((customer) => customer.id !== id)
       setCustomers(allCustomers)
+
+      toast({
+        title: 'Cliente excluído.',
+        description: 'O cliente foi excluído com sucesso.',
+        status: 'success',
+        duration: 1500,
+        isClosable: true,
+        position: 'top-right',
+      })
     } catch (err) {
       console.log(err)
+      toast({
+        title: 'Erro ao excluir cliente.',
+        description: 'Ocorreu um erro ao tentar excluir o cliente.',
+        status: 'error',
+        duration: 1500,
+        isClosable: true,
+        position: 'top-right',
+      })
     }
   }
 
@@ -126,10 +153,13 @@ export function Register() {
     const customerToEdit = customers.find((customer) => customer.id === id)
     if (customerToEdit) {
       customerIdRef.current = id
-      nameRef.current.value = customerToEdit.name
-      emailRef.current.value = customerToEdit.email
-      phoneRef.current.value = customerToEdit.phone
-      documentRef.current.value = customerToEdit.documents
+      if (nameRef.current) nameRef.current.value = customerToEdit.name
+      if (emailRef.current) emailRef.current.value = customerToEdit.email
+      if (phoneRef.current) phoneRef.current.value = customerToEdit.phone
+      if (documentRef.current)
+        documentRef.current.value = customerToEdit.document
+      if (statusRef.current)
+        statusRef.current.value = customerToEdit.status ? 'ativo' : 'inativo'
       setIsOpen(true)
     }
   }
@@ -145,7 +175,8 @@ export function Register() {
       !nameRef.current?.value ||
       !emailRef.current?.value ||
       !phoneRef.current?.value ||
-      !documentRef.current?.value
+      !documentRef.current?.value ||
+      !statusRef.current?.value
     )
       return
 
@@ -155,6 +186,7 @@ export function Register() {
         email: emailRef.current?.value,
         phone: phoneRef.current?.value,
         document: documentRef.current?.value,
+        status: statusRef.current?.value === 'ativo',
       })
 
       const updatedCustomers = customers.map((customer) => {
@@ -165,15 +197,34 @@ export function Register() {
             email: emailRef.current?.value,
             phone: phoneRef.current?.value,
             document: documentRef.current?.value,
+            status: statusRef.current?.value === 'ativo',
           }
         }
         return customer
       })
 
       setCustomers(updatedCustomers)
+      loadCustomers()
       handleCloseModal()
-    } catch (err) {
-      console.log(err)
+
+      toast({
+        title: 'Cliente atualizado.',
+        description: 'O cliente foi atualizado com sucesso.',
+        status: 'success',
+        duration: 1500,
+        isClosable: true,
+        position: 'top-right',
+      })
+    } catch (error) {
+      console.error('Erro ao atualizar cliente:', error)
+
+      toast({
+        title: 'Erro ao atualizar cliente.',
+        description: 'Ocorreu um erro ao tentar atualizar o cliente.',
+        status: 'error',
+        duration: 1500,
+        isClosable: true,
+      })
     }
   }
 
@@ -205,6 +256,7 @@ export function Register() {
                   <Input
                     colorScheme="teal"
                     placeholder="Telefone do cliente"
+                    type="number"
                     size="md"
                     required
                     ref={phoneRef}
@@ -212,6 +264,8 @@ export function Register() {
                   <Input
                     colorScheme="teal"
                     placeholder="Documento do cliente"
+                    maxLength={11}
+                    type="number"
                     size="md"
                     required
                     ref={documentRef}
@@ -296,7 +350,9 @@ export function Register() {
             </Table>
           </TableContainer>
         ) : (
-          <h1>Não há clientes cadastrados</h1>
+          <>
+            <h1>Não há clientes cadastrados</h1>
+          </>
         )}
       </ContainerTable>
 
@@ -323,12 +379,28 @@ export function Register() {
 
             <FormControl mt={4}>
               <FormLabel>Telefone</FormLabel>
-              <Input ref={phoneRef} placeholder="Telefone do cliente" />
+              <Input
+                ref={phoneRef}
+                placeholder="Telefone do cliente"
+                type="number"
+              />
             </FormControl>
 
             <FormControl mt={4}>
               <FormLabel>Documento</FormLabel>
-              <Input ref={documentRef} placeholder="Documento do cliente" />
+              <Input
+                ref={documentRef}
+                placeholder="Documento do cliente"
+                type="number"
+              />
+            </FormControl>
+
+            <FormControl mt={4}>
+              <FormLabel>Status</FormLabel>
+              <Select ref={statusRef}>
+                <option value="ativo">Ativo</option>
+                <option value="inativo">Inativo</option>
+              </Select>
             </FormControl>
           </ModalBody>
 
