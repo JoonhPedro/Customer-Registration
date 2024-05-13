@@ -1,65 +1,107 @@
 import {
-  Input,
-  Stack,
-  Button,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  TableContainer,
-  TableCaption,
   Badge,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Stack,
+  Table,
+  TableCaption,
+  TableContainer,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
 } from '@chakra-ui/react'
+import React, { useEffect, useRef, useState } from 'react'
+import { api } from '../../services/api'
 import {
   Container,
-  Title,
-  FormsContainer,
-  DivButton,
-  RegisterContainer,
-  Inputs,
   ContainerTable,
+  DivButton,
+  FormsContainer,
+  Inputs,
+  RegisterContainer,
+  Title,
 } from './styles'
-import { FormEvent, useRef, useState, useEffect } from 'react'
-import { api } from '../../services/api'
 
-interface CostumerProps {
+interface CustomerProps {
   id: string
   name: string
   email: string
+  phone: string
+  document: string
   status: boolean
   created_at: string
   updated_at: string
 }
 
 export function Register() {
-  const [customers, setCustomers] = useState<CostumerProps[]>([])
+  const [customers, setCustomers] = useState<CustomerProps[]>([])
+  const [isOpen, setIsOpen] = useState(false)
+  const initialRef = useRef<HTMLInputElement | null>(null)
+  const finalRef = useRef<HTMLButtonElement | null>(null)
+  const customerIdRef = useRef<string | null>(null)
   const nameRef = useRef<HTMLInputElement | null>(null)
   const emailRef = useRef<HTMLInputElement | null>(null)
+  const phoneRef = useRef<HTMLInputElement | null>(null)
+  const documentRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
-    loadCustomer()
+    loadCustomers()
   }, [])
 
-  async function loadCustomer() {
-    const responseLoad = await api.get('/customers')
-    setCustomers(responseLoad.data)
+  async function loadCustomers() {
+    const response = await api.get('/customers')
+    setCustomers(response.data)
   }
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!nameRef.current?.value || !emailRef.current?.value) return
+    if (
+      !nameRef.current?.value ||
+      !emailRef.current?.value ||
+      !phoneRef.current?.value ||
+      !documentRef.current?.value
+    )
+      return
 
     const response = await api.post('/customer', {
       name: nameRef.current?.value,
       email: emailRef.current?.value,
+      phone: phoneRef.current?.value,
+      document: documentRef.current?.value,
     })
 
-    setCustomers((allCustomers) => [...allCustomers, response.data])
+    setCustomers([...customers, response.data])
+    handleCloseModal()
+    handleClear()
+  }
 
-    nameRef.current.value = ''
-    emailRef.current.value = ''
+  function handleClear() {
+    if (nameRef.current) {
+      nameRef.current.value = ''
+    }
+
+    if (emailRef.current) {
+      emailRef.current.value = ''
+    }
+
+    if (phoneRef.current) {
+      phoneRef.current.value = ''
+    }
+
+    if (documentRef.current) {
+      documentRef.current.value = ''
+    }
   }
 
   async function handleDelete(id: string) {
@@ -76,33 +118,111 @@ export function Register() {
     }
   }
 
+  function handleOpenModal(id: string) {
+    const customerToEdit = customers.find((customer) => customer.id === id)
+    if (customerToEdit) {
+      customerIdRef.current = id
+      nameRef.current.value = customerToEdit.name
+      emailRef.current.value = customerToEdit.email
+      phoneRef.current.value = customerToEdit.phone
+      documentRef.current.value = customerToEdit.document
+      setIsOpen(true)
+    }
+  }
+
+  function handleCloseModal() {
+    setIsOpen(false)
+    customerIdRef.current = null
+  }
+
+  async function handleUpdateCustomer() {
+    if (
+      !customerIdRef.current ||
+      !nameRef.current?.value ||
+      !emailRef.current?.value ||
+      !phoneRef.current?.value ||
+      !documentRef.current?.value
+    )
+      return
+
+    try {
+      await api.put(`/customer/${customerIdRef.current}`, {
+        name: nameRef.current?.value,
+        email: emailRef.current?.value,
+        phone: phoneRef.current?.value,
+        document: documentRef.current?.value,
+      })
+
+      const updatedCustomers = customers.map((customer) => {
+        if (customer.id === customerIdRef.current) {
+          return {
+            ...customer,
+            name: nameRef.current?.value,
+            email: emailRef.current?.value,
+            phone: phoneRef.current?.value,
+            document: documentRef.current?.value,
+          }
+        }
+        return customer
+      })
+
+      setCustomers(updatedCustomers)
+      handleCloseModal()
+    } catch (err) {
+      console.log(err)
+    }
+  }
+
   return (
     <>
       <Container>
         <Title>Cadastrar Cliente</Title>
         <RegisterContainer>
           <FormsContainer>
-            <form action="" onSubmit={handleSubmit}>
-              <Stack spacing={5}>
+            <form onSubmit={handleSubmit}>
+              <Stack>
                 <Inputs>
                   <Input
                     colorScheme="teal"
-                    placeholder="Nome da cliente"
+                    placeholder="Nome do cliente"
                     size="md"
                     required
                     ref={nameRef}
                   />
                   <Input
                     colorScheme="teal"
-                    placeholder="Email da cliente"
+                    placeholder="Email do cliente"
                     size="md"
                     required
                     ref={emailRef}
                   />
                 </Inputs>
+                <Inputs>
+                  <Input
+                    colorScheme="teal"
+                    placeholder="Telefone do cliente"
+                    size="md"
+                    required
+                    ref={phoneRef}
+                  />
+                  <Input
+                    colorScheme="teal"
+                    placeholder="Documento do cliente"
+                    size="md"
+                    required
+                    ref={documentRef}
+                  />
+                </Inputs>
               </Stack>
               <DivButton>
                 <Stack spacing={3} direction="row">
+                  <Button
+                    colorScheme="teal"
+                    variant="primary"
+                    onClick={handleClear}
+                  >
+                    Limpar
+                  </Button>
                   <Button colorScheme="teal" variant="solid" type="submit">
                     Cadastrar
                   </Button>
@@ -113,7 +233,7 @@ export function Register() {
         </RegisterContainer>
       </Container>
       <ContainerTable>
-        {customers.length > 0 && (
+        {customers.length > 0 ? (
           <TableContainer width="100%">
             <Table variant="striped">
               <TableCaption>Registro de Clientes</TableCaption>
@@ -121,37 +241,97 @@ export function Register() {
                 <Tr>
                   <Th>Nome</Th>
                   <Th>Email</Th>
+                  <Th>Telefone</Th>
+                  <Th>Documento</Th>
                   <Th>Status</Th>
-                  <Th isNumeric>Date Cadastro</Th>
-                  <Th>Delete</Th>
+                  <Th isNumeric>Data Cadastro</Th>
+                  <Th>Ações</Th>
                 </Tr>
               </Thead>
               <Tbody>
-                {customers.map((costumer) => (
-                  <>
-                    <Tr key={costumer.id}>
-                      <Td>{costumer.name}</Td>
-                      <Td>{costumer.email}</Td>
-                      <Td>
-                        <Badge colorScheme="green">
-                          {costumer.status ? 'Ativo' : 'Inativo'}
-                        </Badge>
-                      </Td>
-                      <Td isNumeric>{costumer.created_at}</Td>
-                      <Td>
-                        <button onClick={() => handleDelete(costumer.id)}>
-                          Delete
-                        </button>
-                      </Td>
-                    </Tr>
-                  </>
+                {customers.map((customer) => (
+                  <Tr key={customer.id}>
+                    <Td>{customer.name}</Td>
+                    <Td>{customer.email}</Td>
+                    <Td>{customer.phone}</Td>
+                    <Td>{customer.document}</Td>
+                    <Td>
+                      <Badge colorScheme={customer.status ? 'green' : 'red'}>
+                        {customer.status ? 'Ativo' : 'Inativo'}
+                      </Badge>
+                    </Td>
+                    <Td isNumeric>
+                      {new Intl.DateTimeFormat('pt-BR').format(
+                        new Date(customer.created_at),
+                      )}
+                    </Td>
+                    <Td>
+                      <Button
+                        colorScheme="teal"
+                        size="sm"
+                        onClick={() => handleOpenModal(customer.id)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        color={'red'}
+                        size="sm"
+                        ml={2}
+                        onClick={() => handleDelete(customer.id)}
+                      >
+                        Excluir
+                      </Button>
+                    </Td>
+                  </Tr>
                 ))}
               </Tbody>
             </Table>
           </TableContainer>
+        ) : (
+          <h1>Não há clientes cadastrados</h1>
         )}
-        {customers.length === 0 && <h1>nao possui clientes</h1>}
       </ContainerTable>
+
+      <Modal
+        isOpen={isOpen}
+        onClose={handleCloseModal}
+        initialFocusRef={initialRef}
+        finalFocusRef={finalRef}
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Editar Cliente</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <FormControl>
+              <FormLabel>Nome</FormLabel>
+              <Input ref={nameRef} placeholder="Nome do cliente" />
+            </FormControl>
+
+            <FormControl mt={4}>
+              <FormLabel>Email</FormLabel>
+              <Input ref={emailRef} placeholder="Email do cliente" />
+            </FormControl>
+
+            <FormControl mt={4}>
+              <FormLabel>Telefone</FormLabel>
+              <Input ref={phoneRef} placeholder="Telefone do cliente" />
+            </FormControl>
+
+            <FormControl mt={4}>
+              <FormLabel>Documento</FormLabel>
+              <Input ref={documentRef} placeholder="Documento do cliente" />
+            </FormControl>
+          </ModalBody>
+
+          <ModalFooter>
+            <Button colorScheme="blue" mr={3} onClick={handleUpdateCustomer}>
+              Salvar
+            </Button>
+            <Button onClick={handleCloseModal}>Cancelar</Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </>
   )
 }

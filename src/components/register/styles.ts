@@ -4,6 +4,7 @@ export const Container = styled.div`
   display: grid;
   justify-content: center;
   align-items: center;
+  padding: 2rem 0;
 `
 
 export const RegisterContainer = styled.div`
@@ -36,7 +37,7 @@ export const DivButton = styled.div`
 `
 
 export const Inputs = styled.div`
-  display: grid;
+  display: flex;
   gap: 15px;
   padding-bottom: 1rem;
 `
@@ -44,11 +45,9 @@ export const Inputs = styled.div`
 export const ContainerTable = styled.div`
   display: flex;
   justify-content: center;
-  /* border: solid 1px red; */
-  width: 1000px;
+  width: 1200px;
   padding: 8rem 0;
   button {
-    color: red;
     cursor: pointer;
     transition: 0.2s;
     &:hover {
