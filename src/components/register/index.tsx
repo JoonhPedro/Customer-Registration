@@ -12,6 +12,7 @@ import {
   ModalHeader,
   ModalOverlay,
   Select,
+  Spinner,
   Stack,
   Table,
   TableCaption,
@@ -25,9 +26,7 @@ import {
   useToast,
 } from '@chakra-ui/react'
 import React, { useEffect, useRef, useState } from 'react'
-import { formatCpf } from '../../format/documents'
-import { formatName } from '../../format/name'
-import { formatPhoneNumber } from '../../format/phonerNumber'
+import { formatCpf, formatName, formatPhoneNumber } from '../../format/index'
 import { api } from '../../services/api'
 import {
   Container,
@@ -53,6 +52,7 @@ interface CustomerProps {
 export function Register() {
   const [customers, setCustomers] = useState<CustomerProps[]>([])
   const [isOpen, setIsOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
   const initialRef = useRef<HTMLInputElement | null>(null)
   const finalRef = useRef<HTMLButtonElement | null>(null)
   const customerIdRef = useRef<string | null>(null)
@@ -68,8 +68,15 @@ export function Register() {
   }, [])
 
   async function loadCustomers() {
-    const response = await api.get('/customers')
-    setCustomers(response.data)
+    try {
+      setLoading(true)
+      const response = await api.get('/customers')
+      setCustomers(response.data)
+    } catch (err) {
+      return err
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -83,16 +90,15 @@ export function Register() {
       return
 
     try {
+      setLoading(true)
       const response = await api.post('/customer', {
         name: nameRef.current.value,
         email: emailRef.current.value,
         phone: phoneRef.current.value,
         document: documentRef.current.value,
       })
-
       setCustomers([...customers, response.data])
       handleClear()
-
       toast({
         title: 'Cliente cadastrado.',
         description: 'O cliente foi cadastrado com sucesso.',
@@ -112,6 +118,8 @@ export function Register() {
         isClosable: true,
         position: 'top-right',
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -124,10 +132,10 @@ export function Register() {
 
   async function handleDelete(id: string) {
     try {
+      setLoading(true)
       await api.delete('/customer', { params: { id } })
       const allCustomers = customers.filter((customer) => customer.id !== id)
       setCustomers(allCustomers)
-
       toast({
         title: 'Cliente excluído.',
         description: 'O cliente foi excluído com sucesso.',
@@ -146,6 +154,8 @@ export function Register() {
         isClosable: true,
         position: 'top-right',
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -181,6 +191,7 @@ export function Register() {
       return
 
     try {
+      setLoading(true)
       await api.put(`/customer/${customerIdRef.current}`, {
         name: nameRef.current.value,
         email: emailRef.current.value,
@@ -225,6 +236,8 @@ export function Register() {
         duration: 1500,
         isClosable: true,
       })
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -237,39 +250,51 @@ export function Register() {
             <form onSubmit={handleSubmit}>
               <Stack>
                 <Inputs>
-                  <Input
-                    colorScheme="teal"
-                    placeholder="Nome do cliente"
-                    size="md"
-                    required
-                    ref={nameRef}
-                  />
-                  <Input
-                    colorScheme="teal"
-                    placeholder="Email do cliente"
-                    size="md"
-                    required
-                    ref={emailRef}
-                  />
+                  <FormControl>
+                    <FormLabel>Nome</FormLabel>
+                    <Input
+                      colorScheme="teal"
+                      placeholder="Nome do cliente"
+                      size="md"
+                      required
+                      ref={nameRef}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>Email</FormLabel>
+                    <Input
+                      colorScheme="teal"
+                      placeholder="Email do cliente"
+                      size="md"
+                      required
+                      ref={emailRef}
+                    />
+                  </FormControl>
                 </Inputs>
                 <Inputs>
-                  <Input
-                    colorScheme="teal"
-                    placeholder="Telefone do cliente"
-                    type="number"
-                    size="md"
-                    required
-                    ref={phoneRef}
-                  />
-                  <Input
-                    colorScheme="teal"
-                    placeholder="Documento do cliente"
-                    maxLength={11}
-                    type="number"
-                    size="md"
-                    required
-                    ref={documentRef}
-                  />
+                  <FormControl>
+                    <FormLabel>Telefone</FormLabel>
+                    <Input
+                      colorScheme="teal"
+                      placeholder="Telefone do cliente"
+                      type="number"
+                      size="md"
+                      required
+                      ref={phoneRef}
+                    />
+                  </FormControl>
+                  <FormControl>
+                    <FormLabel>CPF</FormLabel>
+                    <Input
+                      colorScheme="teal"
+                      placeholder="Documento do cliente"
+                      maxLength={11}
+                      type="number"
+                      size="md"
+                      required
+                      ref={documentRef}
+                    />
+                  </FormControl>
                 </Inputs>
               </Stack>
               <DivButton>
@@ -290,72 +315,83 @@ export function Register() {
           </FormsContainer>
         </RegisterContainer>
       </Container>
-      <ContainerTable>
-        {customers.length > 0 ? (
-          <TableContainer width="100%">
-            <Table variant="striped">
-              <TableCaption>Registro de Clientes</TableCaption>
-              <Thead>
-                <Tr>
-                  <Th>Nome</Th>
-                  <Th>Email</Th>
-                  <Th>Telefone</Th>
-                  <Th>Documento</Th>
-                  <Th>Status</Th>
-                  <Th isNumeric>Data Cadastro</Th>
-                  <Th>Ações</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {customers.map((customer) => (
-                  <Tr key={customer.id}>
-                    <Td>
-                      <Tooltip label={customer.name} placement="top-end">
-                        {formatName(customer.name)}
-                      </Tooltip>
-                    </Td>
-                    <Td>{customer.email}</Td>
-                    <Td>{formatPhoneNumber(customer.phone)}</Td>
-                    <Td>{formatCpf(customer.document)}</Td>
-                    <Td>
-                      <Badge colorScheme={customer.status ? 'green' : 'red'}>
-                        {customer.status ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </Td>
-                    <Td isNumeric>
-                      {new Intl.DateTimeFormat('pt-BR').format(
-                        new Date(customer.created_at),
-                      )}
-                    </Td>
-                    <Td>
-                      <Button
-                        colorScheme="teal"
-                        size="sm"
-                        onClick={() => handleOpenModal(customer.id)}
-                      >
-                        Editar
-                      </Button>
-                      <Button
-                        color={'red'}
-                        size="sm"
-                        ml={2}
-                        onClick={() => handleDelete(customer.id)}
-                      >
-                        Excluir
-                      </Button>
-                    </Td>
+      {loading ? (
+        <Container>
+          <Spinner
+            thickness="4px"
+            speed="0.65s"
+            emptyColor="gray.200"
+            color="blue.500"
+            size="xl"
+          />
+        </Container>
+      ) : (
+        <ContainerTable>
+          {customers.length > 0 ? (
+            <TableContainer width="100%">
+              <Table variant="striped">
+                <TableCaption>Registro de Clientes</TableCaption>
+                <Thead>
+                  <Tr>
+                    <Th>Nome</Th>
+                    <Th>Email</Th>
+                    <Th>Telefone</Th>
+                    <Th>Documento</Th>
+                    <Th>Status</Th>
+                    <Th isNumeric>Data Cadastro</Th>
+                    <Th>Ações</Th>
                   </Tr>
-                ))}
-              </Tbody>
-            </Table>
-          </TableContainer>
-        ) : (
-          <>
-            <h1>Não há clientes cadastrados</h1>
-          </>
-        )}
-      </ContainerTable>
-
+                </Thead>
+                <Tbody>
+                  {customers.map((customer) => (
+                    <Tr key={customer.id}>
+                      <Td>
+                        <Tooltip label={customer.name} placement="top-end">
+                          {formatName(customer.name)}
+                        </Tooltip>
+                      </Td>
+                      <Td>{customer.email}</Td>
+                      <Td>{formatPhoneNumber(customer.phone)}</Td>
+                      <Td>{formatCpf(customer.document)}</Td>
+                      <Td>
+                        <Badge colorScheme={customer.status ? 'green' : 'red'}>
+                          {customer.status ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </Td>
+                      <Td isNumeric>
+                        {new Intl.DateTimeFormat('pt-BR').format(
+                          new Date(customer.created_at),
+                        )}
+                      </Td>
+                      <Td>
+                        <Button
+                          colorScheme="teal"
+                          size="sm"
+                          onClick={() => handleOpenModal(customer.id)}
+                        >
+                          Editar
+                        </Button>
+                        <Button
+                          color={'red'}
+                          size="sm"
+                          ml={2}
+                          onClick={() => handleDelete(customer.id)}
+                        >
+                          Excluir
+                        </Button>
+                      </Td>
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <>
+              <h1>Não há clientes cadastrados</h1>
+            </>
+          )}
+        </ContainerTable>
+      )}
       <Modal
         isOpen={isOpen}
         onClose={handleCloseModal}
