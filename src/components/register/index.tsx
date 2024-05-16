@@ -254,7 +254,7 @@ export function Register() {
                     <FormLabel>Nome</FormLabel>
                     <Input
                       colorScheme="teal"
-                      placeholder="Nome do cliente"
+                      placeholder="Nome"
                       size="md"
                       required
                       ref={nameRef}
@@ -264,7 +264,7 @@ export function Register() {
                     <FormLabel>Email</FormLabel>
                     <Input
                       colorScheme="teal"
-                      placeholder="Email do cliente"
+                      placeholder="Email@gmail.com"
                       size="md"
                       required
                       ref={emailRef}
@@ -276,7 +276,7 @@ export function Register() {
                     <FormLabel>Telefone</FormLabel>
                     <Input
                       colorScheme="teal"
-                      placeholder="Telefone do cliente"
+                      placeholder="55 85 900000000"
                       type="number"
                       size="md"
                       required
@@ -287,8 +287,7 @@ export function Register() {
                     <FormLabel>CPF</FormLabel>
                     <Input
                       colorScheme="teal"
-                      placeholder="Documento do cliente"
-                      maxLength={11}
+                      placeholder="123.123.123-12"
                       type="number"
                       size="md"
                       required
