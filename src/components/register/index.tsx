@@ -84,10 +84,10 @@ export function Register() {
 
     try {
       const response = await api.post('/customer', {
-        name: nameRef.current?.value,
-        email: emailRef.current?.value,
-        phone: phoneRef.current?.value,
-        document: documentRef.current?.value,
+        name: nameRef.current.value,
+        email: emailRef.current.value,
+        phone: phoneRef.current.value,
+        document: documentRef.current.value,
       })
 
       setCustomers([...customers, response.data])
@@ -182,21 +182,21 @@ export function Register() {
 
     try {
       await api.put(`/customer/${customerIdRef.current}`, {
-        name: nameRef.current?.value,
-        email: emailRef.current?.value,
-        phone: phoneRef.current?.value,
-        document: documentRef.current?.value,
-        status: statusRef.current?.value === 'ativo',
+        name: nameRef.current.value,
+        email: emailRef.current.value,
+        phone: phoneRef.current.value,
+        document: documentRef.current.value,
+        status: statusRef.current.value === 'ativo',
       })
 
       const updatedCustomers = customers.map((customer) => {
         if (customer.id === customerIdRef.current) {
           return {
             ...customer,
-            name: nameRef.current?.value,
-            email: emailRef.current?.value,
-            phone: phoneRef.current?.value,
-            document: documentRef.current?.value,
+            name: nameRef.current?.value || '',
+            email: emailRef.current?.value || '',
+            phone: phoneRef.current?.value || '',
+            document: documentRef.current?.value || '',
             status: statusRef.current?.value === 'ativo',
           }
         }
