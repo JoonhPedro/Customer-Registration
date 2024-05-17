@@ -33,7 +33,9 @@ export const FormsContainer = styled.div`
 `
 export const DivButton = styled.div`
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 1rem;
 `
 
 export const Inputs = styled.div`
@@ -54,4 +56,10 @@ export const ContainerTable = styled.div`
       opacity: 0.7;
     }
   }
+`
+export const ModeTheme = styled.div`
+  display: grid;
+  justify-content: right;
+  align-items: flex-end;
+  padding-top: 1.5rem;
 `

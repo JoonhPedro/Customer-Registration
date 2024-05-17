@@ -11,6 +11,8 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  Radio,
+  RadioGroup,
   Select,
   Spinner,
   Stack,
@@ -23,8 +25,10 @@ import {
   Thead,
   Tooltip,
   Tr,
+  useColorMode,
   useToast,
 } from '@chakra-ui/react'
+import { SunIcon, MoonIcon } from '@chakra-ui/icons'
 import React, { useEffect, useRef, useState } from 'react'
 import { formatCpf, formatName, formatPhoneNumber } from '../../format/index'
 import { api } from '../../services/api'
@@ -34,6 +38,7 @@ import {
   DivButton,
   FormsContainer,
   Inputs,
+  ModeTheme,
   RegisterContainer,
   Title,
 } from './styles'
@@ -53,8 +58,7 @@ export function Register() {
   const [customers, setCustomers] = useState<CustomerProps[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const initialRef = useRef<HTMLInputElement | null>(null)
-  const finalRef = useRef<HTMLButtonElement | null>(null)
+  // const [value, setValue] = useState()
   const customerIdRef = useRef<string | null>(null)
   const nameRef = useRef<HTMLInputElement | null>(null)
   const emailRef = useRef<HTMLInputElement | null>(null)
@@ -62,6 +66,7 @@ export function Register() {
   const documentRef = useRef<HTMLInputElement | null>(null)
   const statusRef = useRef<HTMLSelectElement | null>(null)
   const toast = useToast()
+  const { colorMode, toggleColorMode } = useColorMode()
 
   useEffect(() => {
     loadCustomers()
@@ -72,6 +77,7 @@ export function Register() {
       setLoading(true)
       const response = await api.get('/customers')
       setCustomers(response.data)
+      console.log(response)
     } catch (err) {
       return err
     } finally {
@@ -172,6 +178,7 @@ export function Register() {
         statusRef.current.value = customerToEdit.status ? 'ativo' : 'inativo'
       setIsOpen(true)
     }
+    handleClear()
   }
 
   function handleCloseModal() {
@@ -187,17 +194,18 @@ export function Register() {
       !phoneRef.current?.value ||
       !documentRef.current?.value ||
       !statusRef.current?.value
-    )
-      return
-
+    ) {
+      // eslint-disable-next-line no-unused-expressions
+      ;('')
+    }
     try {
       setLoading(true)
       await api.put(`/customer/${customerIdRef.current}`, {
-        name: nameRef.current.value,
-        email: emailRef.current.value,
-        phone: phoneRef.current.value,
-        document: documentRef.current.value,
-        status: statusRef.current.value === 'ativo',
+        name: nameRef.current?.value || '',
+        email: emailRef.current?.value || '',
+        phone: phoneRef.current?.value || '',
+        document: documentRef.current?.value || '',
+        status: statusRef.current?.value === 'ativo',
       })
 
       const updatedCustomers = customers.map((customer) => {
@@ -214,9 +222,10 @@ export function Register() {
         return customer
       })
 
+      handleCloseModal()
       setCustomers(updatedCustomers)
       loadCustomers()
-      handleCloseModal()
+      location.reload()
 
       toast({
         title: 'Cliente atualizado.',
@@ -226,15 +235,15 @@ export function Register() {
         isClosable: true,
         position: 'top-right',
       })
-    } catch (error) {
-      console.error('Erro ao atualizar cliente:', error)
-
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (err: any) {
       toast({
-        title: 'Erro ao atualizar cliente.',
+        title: `${err.response.data.message}`,
         description: 'Ocorreu um erro ao tentar atualizar o cliente.',
         status: 'error',
         duration: 1500,
         isClosable: true,
+        position: 'top-right',
       })
     } finally {
       setLoading(false)
@@ -244,6 +253,16 @@ export function Register() {
   return (
     <>
       <Container>
+        <ModeTheme>
+          <Tooltip
+            label={colorMode === 'light' ? 'Light' : 'Dark'}
+            placement="top"
+          >
+            <Button onClick={() => toggleColorMode()}>
+              {colorMode === 'light' ? <SunIcon /> : <MoonIcon />}
+            </Button>
+          </Tooltip>
+        </ModeTheme>
         <Title>Cadastrar Cliente</Title>
         <RegisterContainer>
           <FormsContainer>
@@ -297,6 +316,14 @@ export function Register() {
                 </Inputs>
               </Stack>
               <DivButton>
+                <RadioGroup defaultValue="1">
+                  <Stack direction="row">
+                    <Radio value="1">Ativo</Radio>
+                    <Radio value="2" isDisabled>
+                      Inativo
+                    </Radio>
+                  </Stack>
+                </RadioGroup>
                 <Stack spacing={3} direction="row">
                   <Button
                     colorScheme="teal"
@@ -391,12 +418,7 @@ export function Register() {
           )}
         </ContainerTable>
       )}
-      <Modal
-        isOpen={isOpen}
-        onClose={handleCloseModal}
-        initialFocusRef={initialRef}
-        finalFocusRef={finalRef}
-      >
+      <Modal isOpen={isOpen} onClose={handleCloseModal}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Editar Cliente</ModalHeader>
@@ -404,12 +426,12 @@ export function Register() {
           <ModalBody pb={6}>
             <FormControl>
               <FormLabel>Nome</FormLabel>
-              <Input ref={nameRef} placeholder="Nome do cliente" />
+              <Input ref={nameRef} placeholder="Nome do cliente" required />
             </FormControl>
 
             <FormControl mt={4}>
               <FormLabel>Email</FormLabel>
-              <Input ref={emailRef} placeholder="Email do cliente" />
+              <Input ref={emailRef} placeholder="Email do cliente" required />
             </FormControl>
 
             <FormControl mt={4}>
@@ -418,6 +440,7 @@ export function Register() {
                 ref={phoneRef}
                 placeholder="Telefone do cliente"
                 type="number"
+                required
               />
             </FormControl>
 
@@ -427,6 +450,7 @@ export function Register() {
                 ref={documentRef}
                 placeholder="Documento do cliente"
                 type="number"
+                required
               />
             </FormControl>
 
