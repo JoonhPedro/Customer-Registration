@@ -1,3 +1,4 @@
+import { MoonIcon, SunIcon } from '@chakra-ui/icons'
 import {
   Badge,
   Button,
@@ -11,8 +12,6 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
-  Radio,
-  RadioGroup,
   Select,
   Spinner,
   Stack,
@@ -28,7 +27,6 @@ import {
   useColorMode,
   useToast,
 } from '@chakra-ui/react'
-import { SunIcon, MoonIcon } from '@chakra-ui/icons'
 import React, { useEffect, useRef, useState } from 'react'
 import { formatCpf, formatName, formatPhoneNumber } from '../../format/index'
 import { api } from '../../services/api'
@@ -58,7 +56,6 @@ export function Register() {
   const [customers, setCustomers] = useState<CustomerProps[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  // const [value, setValue] = useState()
   const customerIdRef = useRef<string | null>(null)
   const nameRef = useRef<HTMLInputElement | null>(null)
   const emailRef = useRef<HTMLInputElement | null>(null)
@@ -77,7 +74,6 @@ export function Register() {
       setLoading(true)
       const response = await api.get('/customers')
       setCustomers(response.data)
-      console.log(response)
     } catch (err) {
       return err
     } finally {
@@ -114,8 +110,6 @@ export function Register() {
         position: 'top-right',
       })
     } catch (error) {
-      console.error('Erro ao cadastrar cliente:', error)
-
       toast({
         title: 'Erro ao cadastrar cliente.',
         description: 'Ocorreu um erro ao tentar cadastrar o cliente.',
@@ -151,9 +145,9 @@ export function Register() {
         position: 'top-right',
       })
     } catch (err) {
-      console.log(err)
+      console.log((err as Error).message)
       toast({
-        title: 'Erro ao excluir cliente.',
+        title: `${(err as Error).message}`,
         description: 'Ocorreu um erro ao tentar excluir o cliente.',
         status: 'error',
         duration: 1500,
@@ -195,8 +189,7 @@ export function Register() {
       !documentRef.current?.value ||
       !statusRef.current?.value
     ) {
-      // eslint-disable-next-line no-unused-expressions
-      ;('')
+      return
     }
     try {
       setLoading(true)
@@ -235,10 +228,9 @@ export function Register() {
         isClosable: true,
         position: 'top-right',
       })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
+    } catch (err) {
       toast({
-        title: `${err.response.data.message}`,
+        title: `${(err as Error).message}`,
         description: 'Ocorreu um erro ao tentar atualizar o cliente.',
         status: 'error',
         duration: 1500,
@@ -316,14 +308,6 @@ export function Register() {
                 </Inputs>
               </Stack>
               <DivButton>
-                <RadioGroup defaultValue="1">
-                  <Stack direction="row">
-                    <Radio value="1">Ativo</Radio>
-                    <Radio value="2" isDisabled>
-                      Inativo
-                    </Radio>
-                  </Stack>
-                </RadioGroup>
                 <Stack spacing={3} direction="row">
                   <Button
                     colorScheme="teal"
@@ -428,12 +412,10 @@ export function Register() {
               <FormLabel>Nome</FormLabel>
               <Input ref={nameRef} placeholder="Nome do cliente" required />
             </FormControl>
-
             <FormControl mt={4}>
               <FormLabel>Email</FormLabel>
               <Input ref={emailRef} placeholder="Email do cliente" required />
             </FormControl>
-
             <FormControl mt={4}>
               <FormLabel>Telefone</FormLabel>
               <Input
@@ -443,7 +425,6 @@ export function Register() {
                 required
               />
             </FormControl>
-
             <FormControl mt={4}>
               <FormLabel>Documento</FormLabel>
               <Input
@@ -453,7 +434,6 @@ export function Register() {
                 required
               />
             </FormControl>
-
             <FormControl mt={4}>
               <FormLabel>Status</FormLabel>
               <Select ref={statusRef}>
@@ -462,7 +442,6 @@ export function Register() {
               </Select>
             </FormControl>
           </ModalBody>
-
           <ModalFooter>
             <Button colorScheme="blue" mr={3} onClick={handleUpdateCustomer}>
               Salvar

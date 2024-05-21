@@ -33,8 +33,7 @@ export const FormsContainer = styled.div`
 `
 export const DivButton = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding-top: 1rem;
 `
 
@@ -47,7 +46,7 @@ export const Inputs = styled.div`
 export const ContainerTable = styled.div`
   display: flex;
   justify-content: center;
-  width: 1200px;
+  width: auto;
   padding: 8rem 0;
   button {
     cursor: pointer;
